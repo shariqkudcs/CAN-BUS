@@ -10,3 +10,6 @@ One device that can log all packets is Canalyst II which is a chinese USB to CAN
 In my setup i am using Ardurino Uno, Sunflower CAN Shield v3 and CAN Logging Shield. You would need to disconnect pin 10 on CAN Shield and connect pin 10 to pin 9 on ardurino UNO as pin 10 is also used by logging shield.
 
 Some of the cool things you can get from this project is log the gear shift information and also log individual wheel speeds on Hondas. For other parameters you can use ELM327 side by side on same CAN bus and beaware that ELM327 does polling on CAN BUS insted of asyncronous listening to all raw data that this project can do.
+
+
+STL files adapted from https://www.thingiverse.com/thing:994827 to extend the concept and create an enclosure for this project.

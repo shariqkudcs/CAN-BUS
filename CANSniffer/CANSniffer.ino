@@ -14,6 +14,11 @@ RTC_DS1307 rtc;
 
 void setup()
 {
+  SPI.setClockDivider(SPI_CLOCK_DIV2);//Use 8MHz for full speed data transfer for SD card and CAN BUS
+  SPI.setDataMode(SPI_MODE0);
+  SPI.setBitOrder(MSBFIRST);
+  SPI.begin();
+  
   Serial.begin(115200);
   CAN0.begin(CAN_500KBPS,MCP_8MHz);                       // init can bus : baudrate = 500k
   
@@ -88,16 +93,16 @@ void Parse(String &dataString, uint32_t time,unsigned char* rxBuf,long unsigned 
       dataString+=" ";
       for(int i = 0; i<len; i++)                // Process each byte of the data
       {
-        if(rxBuf[i] < 0x10)                     // If data byte is less than 0x10, add a leading zero
+        /*if(rxBuf[i] < 0x10)                     // If data byte is less than 0x10, add a leading zero
         {
           dataString += "0";
-        }
+        }*/
         dataString+=String(rxBuf[i], HEX);
         dataString+= " ";
       }
       while(len<8)
       {
-        dataString+=" 00";
+        dataString+=" 0";
         len++;
       }
         
@@ -118,43 +123,42 @@ void loop()
   unsigned char len3;
   unsigned char rxBuf3[8];
  
-  long unsigned int rxId4;
+ /* long unsigned int rxId4;
   unsigned char len4;
-  unsigned char rxBuf4[8];
+  unsigned char rxBuf4[8];*/
 
-    
-    unsigned long time=micros();
-    uint32_t seconds = time / 1000000;
-    unsigned long time2;
-    unsigned long time3;
-    unsigned long time4;
-
-    if(CAN_MSGAVAIL == CAN0.checkReceive())
+    while(CAN_MSGAVAIL == CAN0.checkReceive())
     {
+      unsigned long time=micros();
+      uint32_t seconds = time / 1000000;
+      unsigned long time2;
+      unsigned long time3;
+      //unsigned long time4;
+      len=0;len2=0;len3=0;//len4=0;
+    
       //each read to readMsgBufID takes 96 microseconds for full 8 bytes data
       CAN0.readMsgBufID(&rxId,&len, rxBuf);
       time2=micros();
       if(len>0)CAN0.readMsgBufID(&rxId2,&len2, rxBuf2);
       time3=micros();
       if(len2>0)CAN0.readMsgBufID(&rxId3,&len3, rxBuf3);
-      time4=micros();
-      if(len3>0)CAN0.readMsgBufID(&rxId4,&len4, rxBuf4);
+//      time4=micros();
+      //if(len3>0)CAN0.readMsgBufID(&rxId4,&len4, rxBuf4);
       File dataFile = SD.open("datalog.txt", FILE_WRITE);
       if(dataFile)
       {
         String dataString = "";
         if(len>0)Parse(dataString,time,rxBuf,rxId,len,&dataFile);
         if(len2>0)Parse(dataString,time2,rxBuf2,rxId2,len2,&dataFile);
-        dataFile.print(dataString);
         //Serial.print(dataString);
-        dataString="";
         if(len3>0)
         {
           Parse(dataString,time3,rxBuf3,rxId3,len3,&dataFile);
-          if(len4>0)Parse(dataString,time4,rxBuf4,rxId4,len4,&dataFile);
-          dataFile.print(dataString);//160 microseconds minimum to write 50bytes of 4 batches data
-          //Serial.print(dataString);
+          //if(len4>0)Parse(dataString,time4,rxBuf4,rxId4,len4,&dataFile);
+
         }
+        dataFile.print(dataString);//90 ms minimum to write 50bytes of 4 batches data
+        //Serial.print(dataString);
 
         if(seconds%2==0)digitalWrite(6, HIGH);
         else digitalWrite(6, LOW);

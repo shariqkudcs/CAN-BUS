@@ -9,7 +9,7 @@ unsigned long startup_microsecs;
 char daysOfTheWeek[7][5] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 char monthOfYear[12][5]  =  {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
-MCP_CAN CAN0(9);                               // Set CS to pin 4
+MCP_CAN CAN0;                               // Set CS to pin 4
 RTC_DS1307 rtc;
 
 void setup()
@@ -20,18 +20,6 @@ void setup()
   SPI.begin();
   
   Serial.begin(115200);
-  CAN0.begin(CAN_500KBPS,MCP_8MHz);                       // init can bus : baudrate = 500k
-  
-  CAN0.init_Mask(0,0,0x3FF);                // Init first mask...
-  CAN0.init_Mask(1,0,0x3FF);                // Init second mask...
-  CAN0.init_Filt(0,0,0x17c);                // Init first filter...RPM BRAKE - POWERTRAIN DATA
-  CAN0.init_Filt(1,0,0x188);                // Init second filter...GEAR - GEARBOX
-
-  CAN0.init_Filt(2,0,0x13a);                // Init third filter...
-  CAN0.init_Filt(3,0,0x158);                // Init fourth filter...
-  CAN0.init_Filt(4,0,0x1d0);                // Init fifth filter...
-  CAN0.init_Filt(5,0,0x374);                // Init sixth filter...
-  pinMode(2, INPUT);                            // Setting pin 2 for /INT input
 
   if (!SD.begin(10)) {
     return;
@@ -63,9 +51,25 @@ void setup()
         dataFile2.println("base hex timestamps absolute");
         dataFile2.close();
       }
+      CAN0.init_CS(9);
+  
       startup_microsecs=micros();
 
-      //attachInterrupt(0, MCP2515_ISR, FALLING);
+  CAN0=MCP_CAN(9);
+  CAN0.begin(CAN_500KBPS,MCP_8MHz);                       // init can bus : baudrate = 500k
+  CAN0.init_Mask(0,0,0x7FF);                // Init first mask...
+  CAN0.init_Mask(1,0,0x7FF);                // Init second mask...
+  CAN0.init_Filt(0,0,0x17c);                // Init first filter...RPM BRAKE - POWERTRAIN DATA
+  CAN0.init_Filt(1,0,0x188);                // Init second filter...GEAR - GEARBOX
+
+  CAN0.init_Filt(2,0,0x13a);                // Init third filter...
+  CAN0.init_Filt(3,0,0x158);                // Init fourth filter...
+  CAN0.init_Filt(4,0,0x1d0);                // Init fifth filter...
+  CAN0.init_Filt(5,0,0x374);                // Init sixth filter...
+
+  pinMode(2, INPUT);                            // Setting pin 2 for /INT input
+  
+Serial.print("Ready..");
 }
 void Parse(String &dataString, uint32_t time,unsigned char* rxBuf,long unsigned int rxId,unsigned char len,File* dataFile)
 {
